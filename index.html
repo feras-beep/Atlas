@@ -39,7 +39,8 @@
     light.position.set(2, 2, 2);
     scene.add(light);
 
-    // Fetch GLB to check if it's accessible before loading
+    // Fetch and load GLB
+    const loader = new THREE.GLTFLoader();
     fetch('brain.glb')
       .then(response => {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -49,8 +50,7 @@
         console.log("GLB File Loaded Successfully, Size:", data.byteLength);
         const blob = new Blob([data], { type: 'model/gltf-binary' });
         const url = URL.createObjectURL(blob);
-
-        const loader = new THREE.GLTFLoader();
+        
         loader.load(url, 
           (gltf) => {
             console.log("GLB Parsed Successfully", gltf);
@@ -111,3 +111,4 @@
   </script>
 </body>
 </html>
+
