@@ -43,14 +43,21 @@
     scene.add(light);
 
     // Load brain model
-    const loader = new THREE.GLTFLoader();
-    loader.load('brain.glb', function (gltf) {
-      const brain = gltf.scene;
-      brain.scale.set(1.5, 1.5, 1.5);
-      scene.add(brain);
-    }, undefined, function (error) {
-      console.error('Error loading GLB:', error);
-    });
+   loader.load('brain.glb',
+    (gltf) => {
+        console.log("GLB Loaded Successfully", gltf);
+        const brain = gltf.scene;
+        brain.scale.set(1.5, 1.5, 1.5);
+        scene.add(brain);
+    },
+    (xhr) => {
+        console.log(`Loading progress: ${(xhr.loaded / xhr.total) * 100}%`);
+    },
+    (error) => {
+        console.error("Error loading GLB:", error);
+    }
+);
+
 
     // Add invisible clickable regions
     const brainRegions = {
