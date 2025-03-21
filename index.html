@@ -1,19 +1,131 @@
-  <div id="controls">
-    <label>Light Intensity:
-      <input type="range" id="lightSlider" min="0" max="2" step="0.1" value="1">
-    </label><br>
-    <label>Scene Brightness:
-      <input type="range" id="brightnessSlider" min="0" max="2" step="0.1" value="1">
-    </label>
-  </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interactive Brain Language Mapping</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #info-box {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: sans-serif;
+      display: none;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    #controls {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 8px;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="info-box"></div>
 
   <!-- Load Three.js core -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
 
-  <!-- Load main.js AFTER Three.js -->
-  <script src="main.js" defer></script>
+  <script>
+    let brainModel;
+    
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(2, 2, 2);
+    scene.add(light);
+
+    // Load GLB model
+    const loader = new THREE.GLTFLoader();
+    fetch('brain.glb')
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response.arrayBuffer();
+      })
+      .then(data => {
+        console.log("GLB File Loaded Successfully, Size:", data.byteLength);
+        const blob = new Blob([data], { type: 'model/gltf-binary' });
+        const url = URL.createObjectURL(blob);
+        
+        loader.load(url, 
+          (gltf) => {
+            console.log("GLB Parsed Successfully", gltf);
+            brainModel = gltf.scene;
+            brainModel.scale.set(0.15, 0.15, 0.15); // Reduce size further
+            brainModel.position.set(0, 0, 0); // Center the model
+            brainModel.rotation.x = Math.PI / 2; // Ensure the brain is the right way up
+            scene.add(brainModel);
+          },
+          (xhr) => console.log(`Loading progress: ${(xhr.loaded / xhr.total) * 100}%`),
+          (error) => console.error("Error parsing GLB:", error)
+        );
+      })
+      .catch(error => console.error("Error fetching GLB:", error));
+
+    // Adjust camera position
+    camera.position.set(0, 0, 15); // Zoomed out more for full visibility
+
+    // Arrow key movement
+    document.addEventListener("keydown", (event) => {
+      if (!brainModel) return;
+      const moveSpeed = 0.2;
+      switch (event.key) {
+        case "ArrowLeft":
+          brainModel.position.x -= moveSpeed;
+          break;
+        case "ArrowRight":
+          brainModel.position.x += moveSpeed;
+          break;
+        case "ArrowUp":
+          brainModel.position.y += moveSpeed;
+          break;
+        case "ArrowDown":
+          brainModel.position.y -= moveSpeed;
+          break;
+      }
+    });
+
+    new THREE.OrbitControls(camera, renderer.domElement);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+
+  <div id="controls">
+    <label>Light Intensity: <input type="range" id="lightSlider" min="0" max="2" step="0.1" value="1"></label><br>
+    <label>Scene Brightness: <input type="range" id="brightnessSlider" min="0" max="2" step="0.1" value="1"></label>
+  </div>
+
+  <script>
+    const lightSlider = document.getElementById('lightSlider');
+    const brightnessSlider = document.getElementById('brightnessSlider');
+
+    lightSlider.addEventListener('input', () => {
+      light.intensity = parseFloat(lightSlider.value);
+    });
+
+    brightnessSlider.addEventListener('input', () => {
+      renderer.toneMappingExposure = parseFloat(brightnessSlider.value);
+    });
+  </script>
+
 </body>
 </html>
-
