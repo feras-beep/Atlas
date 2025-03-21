@@ -1,71 +1,47 @@
-import { useEffect, useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
-import * as THREE from "three";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Brain Map</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        #info-box { position: absolute; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div id="info-box">Click a brain region</div>
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.145/build/three.module.js';
 
-const brainRegions = {
-  "Broca’s Area": ["fMRI", "MEG", "ECoG"],
-  "Wernicke’s Area": ["TMS", "EEG"],
-  "Motor Cortex": ["Cortical Stimulation", "DTI"],
-};
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-function BrainModel({ onSelectRegion }) {
-  const meshRef = useRef();
-  const [selectedRegion, setSelectedRegion] = useState(null);
+        const geometry = new THREE.SphereGeometry(1.5, 32, 32);
+        const material = new THREE.MeshStandardMaterial({ color: 'lightgray' });
+        const brain = new THREE.Mesh(geometry, material);
+        scene.add(brain);
 
-  useEffect(() => {
-    if (!meshRef.current) return;
-    meshRef.current.traverse((child) => {
-      if (child.isMesh) {
-        child.material = new THREE.MeshStandardMaterial({
-          color: "lightgray", transparent: true, opacity: 0.8,
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(2, 2, 2);
+        scene.add(light);
+
+        camera.position.z = 5;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            brain.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('click', () => {
+            document.getElementById("info-box").innerHTML = "Selected: Broca’s Area (fMRI, MEG, ECoG)";
         });
-        child.userData = { name: "Brain" };
-      }
-    });
-  }, []);
-
-  const handlePointerDown = (event) => {
-    event.stopPropagation();
-    const regionName = Object.keys(brainRegions)[Math.floor(Math.random() * Object.keys(brainRegions).length)];
-    setSelectedRegion(regionName);
-    onSelectRegion(regionName);
-  };
-
-  return (
-    <mesh ref={meshRef} onPointerDown={handlePointerDown}>
-      <sphereGeometry args={[1.5, 32, 32]} />
-      <meshStandardMaterial color="lightgray" />
-    </mesh>
-  );
-}
-
-export default function App() {
-  const [selectedRegion, setSelectedRegion] = useState(null);
-
-  return (
-    <div className="h-screen flex flex-col">
-      <div className="p-4 text-center bg-gray-800 text-white text-xl font-bold">
-        Interactive Brain Language Mapping
-      </div>
-      <div className="flex-grow relative">
-        <Canvas className="w-full h-full" camera={{ position: [0, 0, 5] }}>
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[2, 2, 2]} />
-          <OrbitControls />
-          <BrainModel onSelectRegion={setSelectedRegion} />
-        </Canvas>
-        {selectedRegion && (
-          <div className="absolute top-10 left-10 bg-white p-4 rounded-lg shadow-lg">
-            <h2 className="text-lg font-bold">{selectedRegion}</h2>
-            <ul className="mt-2 list-disc pl-5">
-              {brainRegions[selectedRegion].map((tech) => (
-                <li key={tech}>{tech}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+    </script>
+</body>
+</html>
