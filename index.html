@@ -39,6 +39,7 @@
     light.position.set(2, 2, 2);
     scene.add(light);
 
+    // Ensure GLTFLoader is correctly defined
     const loader = new THREE.GLTFLoader();
     loader.load('brain.glb',
       (gltf) => {
