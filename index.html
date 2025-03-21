@@ -22,44 +22,39 @@
 <body>
   <div id="info-box"></div>
 
-  <!-- THREE.js core -->
+  <!-- Load Three.js core -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js"></script>
-
   <!-- Loaders and controls that depend on THREE being defined -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
 
   <script>
-    // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Lighting
     const light = new THREE.DirectionalLight(0xffffff, 1);
     light.position.set(2, 2, 2);
     scene.add(light);
 
-    // Load brain model
-   loader.load('brain.glb',
-    (gltf) => {
+    const loader = new THREE.GLTFLoader();
+    loader.load('brain.glb',
+      (gltf) => {
         console.log("GLB Loaded Successfully", gltf);
         const brain = gltf.scene;
         brain.scale.set(1.5, 1.5, 1.5);
         scene.add(brain);
-    },
-    (xhr) => {
+      },
+      (xhr) => {
         console.log(`Loading progress: ${(xhr.loaded / xhr.total) * 100}%`);
-    },
-    (error) => {
+      },
+      (error) => {
         console.error("Error loading GLB:", error);
-    }
-);
+      }
+    );
 
-
-    // Add invisible clickable regions
     const brainRegions = {
       "Broca’s Area": { position: [-0.5, 1.0, 0.3], techniques: ["fMRI", "MEG", "ECoG"] },
       "Wernicke’s Area": { position: [0.7, 0.8, -0.4], techniques: ["TMS", "EEG"] },
@@ -76,7 +71,6 @@
       scene.add(marker);
     });
 
-    // Click detection
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
@@ -98,15 +92,12 @@
 
     window.addEventListener('click', onMouseClick);
     camera.position.z = 5;
-
-    // Controls
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    new THREE.OrbitControls(camera, renderer.domElement);
 
     function animate() {
       requestAnimationFrame(animate);
       renderer.render(scene, camera);
     }
-
     animate();
   </script>
 </body>
