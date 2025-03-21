@@ -56,7 +56,7 @@
             console.log("GLB Parsed Successfully", gltf);
             const brain = gltf.scene;
             brain.scale.set(1.5, 1.5, 1.5);
-            brain.scale.set(0.5, 0.5, 0.5); // Reduce the size of the brain model
+            brain.scale.set(0.2, 0.2, 0.2); // Reduce brain size further // Reduce the size of the brain model
 brain.position.set(0, 0, 0); // Center the model
 scene.add(brain);
           },
@@ -102,7 +102,7 @@ scene.add(brain);
     }
 
     window.addEventListener('click', onMouseClick);
-    camera.position.z = 2.5; // Move camera closer for a better fit
+    camera.position.set(0, 0, 10); // Zoom out more to fit the entire model // Move camera closer for a better fit
     new THREE.OrbitControls(camera, renderer.domElement);
 
     function animate() {
