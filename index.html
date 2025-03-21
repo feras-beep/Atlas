@@ -1,91 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Brain Language Mapping</title>
-    <style>
-        body { margin: 0; overflow: hidden; }
-        #info-box {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            font-family: sans-serif;
-            display: none;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        }
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r145/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interactive Brain Language Mapping</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #info-box {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: sans-serif;
+      display: none;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+  </style>
 </head>
 <body>
-    <div id="info-box"></div>
-    <script>
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+  <div id="info-box"></div>
 
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(2, 2, 2);
-        scene.add(light);
+  <!-- Load Three.js core first -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r145/three.min.js"></script>
 
-        const loader = new THREE.GLTFLoader();
-        loader.load('brain.glb', function (gltf) {
-            const brain = gltf.scene;
-            brain.scale.set(1.5, 1.5, 1.5);
-            scene.add(brain);
-        });
+  <!-- THEN the loaders that depend on it -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
 
-        const brainRegions = {
-            "Broca’s Area": { position: [-0.5, 1.0, 0.3], techniques: ["fMRI", "MEG", "ECoG"] },
-            "Wernicke’s Area": { position: [0.7, 0.8, -0.4], techniques: ["TMS", "EEG"] },
-            "Motor Cortex": { position: [-0.3, 1.5, 0.2], techniques: ["Cortical Stimulation", "DTI"] },
-        };
+  <!-- Your actual app script -->
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-        Object.entries(brainRegions).forEach(([name, { position, techniques }]) => {
-            const marker = new THREE.Mesh(
-                new THREE.SphereGeometry(0.1, 16, 16),
-                new THREE.MeshBasicMaterial({ color: 'red', transparent: true, opacity: 0.0 })
-            );
-            marker.position.set(...position);
-            marker.userData = { name, techniques };
-            scene.add(marker);
-        });
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(2, 2, 2);
+    scene.add(light);
 
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
+    const loader = new THREE.GLTFLoader();
+    loader.load('brain.glb', function (gltf) {
+      const brain = gltf.scene;
+      brain.scale.set(1.5, 1.5, 1.5);
+      scene.add(brain);
+    });
 
-        function onMouseClick(event) {
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(scene.children);
-            for (const i of intersects) {
-                if (i.object.userData.name) {
-                    const { name, techniques } = i.object.userData;
-                    const box = document.getElementById('info-box');
-                    box.innerHTML = `<strong>${name}</strong><br>${techniques.join(', ')}`;
-                    box.style.display = 'block';
-                    return;
-                }
-            }
+    const brainRegions = {
+      "Broca’s Area": { position: [-0.5, 1.0, 0.3], techniques: ["fMRI", "MEG", "ECoG"] },
+      "Wernicke’s Area": { position: [0.7, 0.8, -0.4], techniques: ["TMS", "EEG"] },
+      "Motor Cortex": { position: [-0.3, 1.5, 0.2], techniques: ["Cortical Stimulation", "DTI"] },
+    };
+
+    Object.entries(brainRegions).forEach(([name, { position, techniques }]) => {
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 'red', transparent: true, opacity: 0.0 })
+      );
+      marker.position.set(...position);
+      marker.userData = { name, techniques };
+      scene.add(marker);
+    });
+
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    function onMouseClick(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(scene.children);
+      for (const i of intersects) {
+        if (i.object.userData.name) {
+          const { name, techniques } = i.object.userData;
+          const box = document.getElementById('info-box');
+          box.innerHTML = `<strong>${name}</strong><br>${techniques.join(', ')}`;
+          box.style.display = 'block';
+          return;
         }
+      }
+    }
 
-        window.addEventListener('click', onMouseClick);
-        camera.position.z = 5;
-        new THREE.OrbitControls(camera, renderer.domElement);
+    window.addEventListener('click', onMouseClick);
+    camera.position.z = 5;
+    new THREE.OrbitControls(camera, renderer.domElement);
 
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-        animate();
-    </script>
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
 </body>
 </html>
+
