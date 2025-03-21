@@ -17,7 +17,6 @@
       display: none;
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
     }
-
     #controls {
       position: absolute;
       bottom: 10px;
@@ -26,6 +25,25 @@
       padding: 10px;
       border-radius: 8px;
       font-family: sans-serif;
+    }
+    #arrows {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .arrow-button {
+      width: 50px;
+      height: 50px;
+      margin: 5px;
+      font-size: 24px;
+      cursor: pointer;
+      text-align: center;
+      background: lightgray;
+      border: none;
+      border-radius: 5px;
     }
   </style>
 </head>
@@ -39,16 +57,20 @@
 
   <script>
     let brainModel;
-    
+
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(2, 2, 2);
-    scene.add(light);
+    // Lighting improvements
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    directionalLight.position.set(2, 2, 2);
+    scene.add(directionalLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Added ambient light to prevent darkness
+    scene.add(ambientLight);
 
     // Load GLB model
     const loader = new THREE.GLTFLoader();
@@ -66,9 +88,9 @@
           (gltf) => {
             console.log("GLB Parsed Successfully", gltf);
             brainModel = gltf.scene;
-            brainModel.scale.set(0.15, 0.15, 0.15); // Reduce size further
-            brainModel.position.set(0, 0, 0); // Center the model
-            brainModel.rotation.x = Math.PI / 2; // Ensure the brain is the right way up
+            brainModel.scale.set(0.1, 0.1, 0.1); // Adjusted scale for better centering
+            brainModel.position.set(0, 0, 0); // Center model
+            brainModel.rotation.x = -Math.PI / 2; // Fix brain orientation (flipped)
             scene.add(brainModel);
           },
           (xhr) => console.log(`Loading progress: ${(xhr.loaded / xhr.total) * 100}%`),
@@ -78,27 +100,45 @@
       .catch(error => console.error("Error fetching GLB:", error));
 
     // Adjust camera position
-    camera.position.set(0, 0, 15); // Zoomed out more for full visibility
+    camera.position.set(0, 0, 15); // Zoomed out more
 
-    // Arrow key movement
-    document.addEventListener("keydown", (event) => {
-      if (!brainModel) return;
-      const moveSpeed = 0.2;
-      switch (event.key) {
-        case "ArrowLeft":
-          brainModel.position.x -= moveSpeed;
-          break;
-        case "ArrowRight":
-          brainModel.position.x += moveSpeed;
-          break;
-        case "ArrowUp":
-          brainModel.position.y += moveSpeed;
-          break;
-        case "ArrowDown":
-          brainModel.position.y -= moveSpeed;
-          break;
-      }
+    // Brain Region Markers
+    const brainRegions = {
+      "Broca’s Area": { position: [-1, 1.2, 0.3], techniques: ["fMRI", "MEG", "ECoG"] },
+      "Wernicke’s Area": { position: [1, 1.2, -0.4], techniques: ["TMS", "EEG"] },
+      "Motor Cortex": { position: [-0.5, 1.5, 0.2], techniques: ["Cortical Stimulation", "DTI"] },
+    };
+
+    Object.entries(brainRegions).forEach(([name, { position, techniques }]) => {
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 'red', transparent: true, opacity: 0.5 }) // Made markers semi-visible for debugging
+      );
+      marker.position.set(...position);
+      marker.userData = { name, techniques };
+      scene.add(marker);
     });
+
+    // Click detection
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    function onMouseClick(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(scene.children);
+      for (const i of intersects) {
+        if (i.object.userData.name) {
+          const { name, techniques } = i.object.userData;
+          const box = document.getElementById('info-box');
+          box.innerHTML = `<strong>${name}</strong><br>${techniques.join(', ')}`;
+          box.style.display = 'block';
+          return;
+        }
+      }
+    }
+    window.addEventListener('click', onMouseClick);
 
     new THREE.OrbitControls(camera, renderer.domElement);
 
@@ -107,25 +147,36 @@
       renderer.render(scene, camera);
     }
     animate();
+
+    // Arrow key movement
+    function moveBrain(x, y) {
+      if (!brainModel) return;
+      brainModel.position.x += x;
+      brainModel.position.y += y;
+    }
+
+    // UI Arrows
+    document.addEventListener("keydown", (event) => {
+      const moveSpeed = 0.2;
+      switch (event.key) {
+        case "ArrowLeft": moveBrain(-moveSpeed, 0); break;
+        case "ArrowRight": moveBrain(moveSpeed, 0); break;
+        case "ArrowUp": moveBrain(0, moveSpeed); break;
+        case "ArrowDown": moveBrain(0, -moveSpeed); break;
+      }
+    });
+
   </script>
 
-  <div id="controls">
-    <label>Light Intensity: <input type="range" id="lightSlider" min="0" max="2" step="0.1" value="1"></label><br>
-    <label>Scene Brightness: <input type="range" id="brightnessSlider" min="0" max="2" step="0.1" value="1"></label>
+  <div id="arrows">
+    <button class="arrow-button" onclick="moveBrain(0, 0.2)">↑</button>
+    <div>
+      <button class="arrow-button" onclick="moveBrain(-0.2, 0)">←</button>
+      <button class="arrow-button" onclick="moveBrain(0.2, 0)">→</button>
+    </div>
+    <button class="arrow-button" onclick="moveBrain(0, -0.2)">↓</button>
   </div>
-
-  <script>
-    const lightSlider = document.getElementById('lightSlider');
-    const brightnessSlider = document.getElementById('brightnessSlider');
-
-    lightSlider.addEventListener('input', () => {
-      light.intensity = parseFloat(lightSlider.value);
-    });
-
-    brightnessSlider.addEventListener('input', () => {
-      renderer.toneMappingExposure = parseFloat(brightnessSlider.value);
-    });
-  </script>
 
 </body>
 </html>
+
