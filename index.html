@@ -56,7 +56,9 @@
             console.log("GLB Parsed Successfully", gltf);
             const brain = gltf.scene;
             brain.scale.set(1.5, 1.5, 1.5);
-            scene.add(brain);
+            brain.scale.set(0.5, 0.5, 0.5); // Reduce the size of the brain model
+brain.position.set(0, 0, 0); // Center the model
+scene.add(brain);
           },
           (xhr) => console.log(`Loading progress: ${(xhr.loaded / xhr.total) * 100}%`),
           (error) => console.error("Error parsing GLB:", error)
@@ -100,7 +102,7 @@
     }
 
     window.addEventListener('click', onMouseClick);
-    camera.position.z = 5;
+    camera.position.z = 2.5; // Move camera closer for a better fit
     new THREE.OrbitControls(camera, renderer.domElement);
 
     function animate() {
@@ -111,4 +113,3 @@
   </script>
 </body>
 </html>
-
